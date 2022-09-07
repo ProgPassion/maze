@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        .maze-field {
+            width: 500px;
+            height: 500px;
+            margin: 50px auto;
+            background-color: #666;
+            position: relative;
+        }
+        .cell {
+            position: absolute;
+            background-color: darkgray;
+            box-sizing: border-box;
+            border: 1px solid #000;
+        }
+    </style>
+    <title>Document</title>
+</head>
+<body>
+    <div class="maze-field">
+    </div>
+    
+    <script>
+        function Maze() {
+            this.width = 500;
+            this.height = 500;
+            this.mazeField = [];
+            this.historyCellVisited = [];
+            this.tagElem = document.querySelector(".maze-field");
+        }
+        
+        Maze.prototype.createMaze = function(cellSize) {
+            for(let i = 0; i < this.height; i += cellSize.height) {
+                let mazeFieldSubArray = [];
+                for(let j = 0; j < this.width; j += cellSize.width) {
+                    let cell = new Cell(cellSize.width, cellSize.height, j, i);
+                    cell.createCellInsideMaze(this.tagElem);
+                    mazeFieldSubArray.push(cell);
+                }
+                this.mazeField.push(mazeFieldSubArray);
+            }
+        }
+
+        Maze.prototype.getCellRandomly = function() {
+            let yCoor = Math.floor(Math.random() * this.mazeField.length);
+            let xCoor = Math.floor(Math.random() * this.mazeField.length);
+            return this.mazeField[yCoor][xCoor];
+        }
+
+        Maze.prototype.getAdjacentCell = function(cell) {
+            let randAdjacentSelected;
+            
+            let cellAdjacentTop = this.mazeField[cell.y / 20 - 1][cell.x / 20];
+            cellAdjacentTop.direction = "top";
+
+            let cellAdjacentBottom = this.mazeField[cell.y / 20 + 1][cell.x / 20];
+            cellAdjacentBottom.direction = "bottom";
+
+            let cellAdjacentRight = this.mazeField[cell.y / 20][cell.x / 20 + 1];
+            cellAdjacentRight.direction = "right";
+
+            let cellAdjacentLeft = this.mazeField[cell.y / 20][cell.x / 20 - 1];
+            cellAdjacentLeft.direction = "left";
+
+            const adjacentCellsDirection = [
+                cellAdjacentTop,
+                cellAdjacentBottom,
+                cellAdjacentRight,
+                cellAdjacentLeft,                
+            ];
+
+            do {
+                let randIndex = Math.floor(Math.random() * adjacentCellsDirection.length);
+                randAdjacentSelected = adjacentCellsDirection[randIndex];
+                adjacentCellsDirection.splice(randIndex, 1);
+            } while(randAdjacentSelected != undefined && randAdjacentSelected.visited);
+            
+            if(adjacentCellsDirection.length > 0) {
+                this.historyCellVisited.push(cell);
+                return randAdjacentSelected;
+            }
+            this.getAdjacentCell(this.historyCellVisited.pop());
+        }
+
+        function Cell(width, height, x, y) {
+            this.width = width;
+            this.height = height;
+            this.x = x;
+            this.y = y;
+            this.visited = false;
+        }
+
+        Cell.prototype.createCellInsideMaze = function(mazeTagElem) {
+            let cell = document.createElement("div");
+            mazeTagElem.appendChild(cell);
+            cell.classList.add("cell");
+            
+            cell.style.width = `${this.width}px`;
+            cell.style.height = `${this.height}px`;
+            cell.style.top = `${this.y}px`;
+            cell.style.left = `${this.x}px`;
+            
+            cell.setAttribute("id", `cell_${this.x}_${this.y}`);
+            this.cellTagElem = document.getElementById(`cell_${this.x}_${this.y}`);
+
+        }
+
+        Cell.prototype.removeBackground = function() {
+            this.cellTagElem.style.backgroundColor = "#666";
+        }
+
+        Cell.prototype.removeBorderOfAdjacentCell = function() {
+            switch(this.direction) {
+                case "top":
+                    this.cellTagElem.style.borderBottom = "none";        
+                    break;
+                case "bottom":
+                    this.cellTagElem.style.borderTop = "none";
+                    break;
+                case "right":
+                    this.cellTagElem.style.borderLeft = "none";        
+                    break;
+                case "left":
+                    this.cellTagElem.style.borderRight = "none";        
+                    break;
+            }
+        }
+
+        Cell.prototype.removeBorderCurrentCell = function(adjacentCellDirection) {
+            switch(adjacentCellDirection) {
+                case "top":
+                    this.cellTagElem.style.borderTop = "none";
+                    break;
+                case "bottom":
+                    this.cellTagElem.style.borderBottom = "none";
+                    break;
+                case "right":
+                    this.cellTagElem.style.borderRight = "none";
+                    break;
+                case "left":
+                    this.cellTagElem.style.borderLeft = "none";
+                    break;
+            }
+        }
+
+        Cell.prototype.makeCellWhite = function() {
+            this.cellTagElem.style.backgroundColor = "#fff";
+        }
+
+        let maze = new Maze();
+        let cellSize = {
+            width: 20,
+            height: 20,
+        };
+        maze.createMaze(cellSize);
+        let currentCell = maze.getCellRandomly();
+        currentCell.makeCellWhite();
+        currentCell.visited = true;
+        
+        setInterval(function() {
+            let adjacentCell = maze.getAdjacentCell(currentCell);
+            currentCell.removeBackground(); 
+            currentCell.removeBorderCurrentCell(adjacentCell.direction);
+
+            adjacentCell.makeCellWhite();
+            adjacentCell.removeBorderOfAdjacentCell();
+            adjacentCell.visited = true;
+            currentCell = adjacentCell;
+        },1000);
+        
+    </script>
+</body>
+</html>
