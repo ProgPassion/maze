@@ -51,37 +51,53 @@
 
         Maze.prototype.getAdjacentCell = function(cell) {
             let randAdjacentSelected;
+            let adjacentCellsDirection = [];
+
+            if(cell.y / 20 - 1 >= 0) {
+                
+                let cellAdjacentTop = this.mazeField[cell.y / 20 - 1][cell.x / 20];
+                if(cellAdjacentTop.visited === false) {
+                    cellAdjacentTop.direction = "top";
+                    adjacentCellsDirection.push(cellAdjacentTop);
+                }
+                    
+            }
             
-            let cellAdjacentTop = this.mazeField[cell.y / 20 - 1][cell.x / 20];
-            cellAdjacentTop.direction = "top";
-
-            let cellAdjacentBottom = this.mazeField[cell.y / 20 + 1][cell.x / 20];
-            cellAdjacentBottom.direction = "bottom";
-
-            let cellAdjacentRight = this.mazeField[cell.y / 20][cell.x / 20 + 1];
-            cellAdjacentRight.direction = "right";
-
-            let cellAdjacentLeft = this.mazeField[cell.y / 20][cell.x / 20 - 1];
-            cellAdjacentLeft.direction = "left";
-
-            const adjacentCellsDirection = [
-                cellAdjacentTop,
-                cellAdjacentBottom,
-                cellAdjacentRight,
-                cellAdjacentLeft,                
-            ];
-
-            do {
-                let randIndex = Math.floor(Math.random() * adjacentCellsDirection.length);
-                randAdjacentSelected = adjacentCellsDirection[randIndex];
-                adjacentCellsDirection.splice(randIndex, 1);
-            } while(randAdjacentSelected != undefined && randAdjacentSelected.visited);
+            if(cell.y / 20 + 1 <= 24) {
+                
+                let cellAdjacentBottom = this.mazeField[cell.y / 20 + 1][cell.x / 20];
+                if(cellAdjacentBottom.visited === false) {
+                    cellAdjacentBottom.direction = "bottom";
+                    adjacentCellsDirection.push(cellAdjacentBottom);
+                }
+                    
+            }
             
+            if(cell.x / 20 + 1 <= 24) {
+                
+                let cellAdjacentRight = this.mazeField[cell.y / 20][cell.x / 20 + 1];
+                if(cellAdjacentRight.visited === false) {
+                    cellAdjacentRight.direction = "right";
+                    adjacentCellsDirection.push(cellAdjacentRight);    
+                }
+            }
+
+            if(cell.x / 20 - 1 >= 0) {
+               
+                let cellAdjacentLeft = this.mazeField[cell.y / 20][cell.x / 20 - 1];
+                if(cellAdjacentLeft.visited === false) {
+                    cellAdjacentLeft.direction = "left";
+                    adjacentCellsDirection.push(cellAdjacentLeft);
+                }
+            }
+
             if(adjacentCellsDirection.length > 0) {
                 this.historyCellVisited.push(cell);
+                let randIndex = Math.floor(Math.random() * adjacentCellsDirection.length);
+                randAdjacentSelected = adjacentCellsDirection[randIndex];
                 return randAdjacentSelected;
             }
-            this.getAdjacentCell(this.historyCellVisited.pop());
+            return this.getAdjacentCell(this.historyCellVisited.pop());
         }
 
         function Cell(width, height, x, y) {
@@ -168,7 +184,7 @@
             adjacentCell.removeBorderOfAdjacentCell();
             adjacentCell.visited = true;
             currentCell = adjacentCell;
-        },1000);
+        },50);
         
     </script>
 </body>
