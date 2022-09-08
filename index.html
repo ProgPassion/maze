@@ -16,28 +16,33 @@
             border: 1px solid #000;
         }
     </style>
-    <title>Document</title>
+    <title>Maze Generator</title>
 </head>
 <body>
     <div class="maze-field">
     </div>
     
     <script>
-        function Maze() {
-            this.width = 300;
-            this.height = 300;
+        function Maze(width, height, cellSize) {
+            this.width = width;
+            this.height = height;
+            this.cellSize = cellSize;
+            this.startEdge = 0;
+            this.endEdge = width / cellSize.width - 1;
             this.mazeField = [];
             this.historyCellVisited = [];
             this.tagElem = document.querySelector(".maze-field");
+            this.unvisitedCells = 0;
         }
         
-        Maze.prototype.createMaze = function(cellSize) {
-            for(let i = 0; i < this.height; i += cellSize.height) {
+        Maze.prototype.createMaze = function() {
+            for(let i = 0; i < this.height; i += this.cellSize.height) {
                 let mazeFieldSubArray = [];
-                for(let j = 0; j < this.width; j += cellSize.width) {
-                    let cell = new Cell(cellSize.width, cellSize.height, j, i);
+                for(let j = 0; j < this.width; j += this.cellSize.width) {
+                    let cell = new Cell(this.cellSize.width, this.cellSize.height, j, i);
                     cell.createCellInsideMaze(this.tagElem);
                     mazeFieldSubArray.push(cell);
+                    this.unvisitedCells++;
                 }
                 this.mazeField.push(mazeFieldSubArray);
             }
@@ -46,6 +51,7 @@
         Maze.prototype.getCellRandomly = function() {
             let yCoor = Math.floor(Math.random() * this.mazeField.length);
             let xCoor = Math.floor(Math.random() * this.mazeField.length);
+            this.unvisitedCells--;
             return this.mazeField[yCoor][xCoor];
         }
 
@@ -53,9 +59,9 @@
             let randAdjacentSelected;
             let adjacentCellsDirection = [];
 
-            if(cell.y / 20 - 1 >= 0) {
+            if(cell.y / this.cellSize.height - 1 >= this.startEdge) {
                 
-                let cellAdjacentTop = this.mazeField[cell.y / 20 - 1][cell.x / 20];
+                let cellAdjacentTop = this.mazeField[cell.y / this.cellSize.height - 1][cell.x / this.cellSize.width];
                 if(cellAdjacentTop.visited === false) {
                     cellAdjacentTop.direction = "top";
                     adjacentCellsDirection.push(cellAdjacentTop);
@@ -63,9 +69,9 @@
                     
             }
             
-            if(cell.y / 20 + 1 <= 14) {
+            if(cell.y / this.cellSize.height + 1 <= this.endEdge) {
                 
-                let cellAdjacentBottom = this.mazeField[cell.y / 20 + 1][cell.x / 20];
+                let cellAdjacentBottom = this.mazeField[cell.y / this.cellSize.height + 1][cell.x / this.cellSize.width];
                 if(cellAdjacentBottom.visited === false) {
                     cellAdjacentBottom.direction = "bottom";
                     adjacentCellsDirection.push(cellAdjacentBottom);
@@ -73,18 +79,18 @@
                     
             }
             
-            if(cell.x / 20 + 1 <= 14) {
+            if(cell.x / this.cellSize.width + 1 <= this.endEdge) {
                 
-                let cellAdjacentRight = this.mazeField[cell.y / 20][cell.x / 20 + 1];
+                let cellAdjacentRight = this.mazeField[cell.y / this.cellSize.height][cell.x / this.cellSize.width + 1];
                 if(cellAdjacentRight.visited === false) {
                     cellAdjacentRight.direction = "right";
-                    adjacentCellsDirection.push(cellAdjacentRight);    
+                    adjacentCellsDirection.push(cellAdjacentRight);
                 }
             }
 
-            if(cell.x / 20 - 1 >= 0) {
+            if(cell.x / this.cellSize.width - 1 >= this.startEdge) {
                
-                let cellAdjacentLeft = this.mazeField[cell.y / 20][cell.x / 20 - 1];
+                let cellAdjacentLeft = this.mazeField[cell.y / this.cellSize.height][cell.x / this.cellSize.width - 1];
                 if(cellAdjacentLeft.visited === false) {
                     cellAdjacentLeft.direction = "left";
                     adjacentCellsDirection.push(cellAdjacentLeft);
@@ -95,6 +101,7 @@
                 this.historyCellVisited.push(cell);
                 let randIndex = Math.floor(Math.random() * adjacentCellsDirection.length);
                 randAdjacentSelected = adjacentCellsDirection[randIndex];
+                this.unvisitedCells--;
                 return randAdjacentSelected;
             }
             return this.historyCellVisited.pop();
@@ -118,9 +125,7 @@
             cell.style.top = `${this.y}px`;
             cell.style.left = `${this.x}px`;
             
-            cell.setAttribute("id", `cell_${this.x}_${this.y}`);
-            this.cellTagElem = document.getElementById(`cell_${this.x}_${this.y}`);
-
+            this.cellTagElem = cell;
         }
 
         Cell.prototype.removeBackground = function() {
@@ -149,7 +154,7 @@
              * Every cell border visualization is made by two borders
              * example: cell1.right + cell2.left or cell20.bottom + cell30.top
              * At the moment that the currentcell is going back to cells that has
-             * been visited it returns because otherwise it will remove one 
+             * been visited it returns and go out of function because otherwise it will remove one 
              * of the borders that has visited previously 
              */ 
             if(adjacentCell.visited)
@@ -175,17 +180,19 @@
             this.cellTagElem.style.backgroundColor = "#fff";
         }
 
-        let maze = new Maze();
         let cellSize = {
             width: 20,
             height: 20,
         };
+        let maze = new Maze(300, 300, cellSize);
+        
         maze.createMaze(cellSize);
         let currentCell = maze.getCellRandomly();
+
         currentCell.makeCellWhite();
         currentCell.visited = true;
         
-        setInterval(function() {
+        let intervalId = setInterval(function() {
             let adjacentCell = maze.getAdjacentCell(currentCell);
             currentCell.removeBackground(); 
             currentCell.removeBorderCurrentCell(adjacentCell);
@@ -194,8 +201,13 @@
             adjacentCell.removeBorderOfAdjacentCell();
             adjacentCell.visited = true;
             currentCell = adjacentCell;
+
+            if(maze.unvisitedCells === 0) {
+                clearInterval(intervalId);
+                currentCell.removeBackground();
+            }
         },100);
-        
+
     </script>
 </body>
 </html>
