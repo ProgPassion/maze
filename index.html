@@ -3,8 +3,8 @@
 <head>
     <style>
         .maze-field {
-            width: 500px;
-            height: 500px;
+            width: 300px;
+            height: 300px;
             margin: 50px auto;
             background-color: #666;
             position: relative;
@@ -24,8 +24,8 @@
     
     <script>
         function Maze() {
-            this.width = 500;
-            this.height = 500;
+            this.width = 300;
+            this.height = 300;
             this.mazeField = [];
             this.historyCellVisited = [];
             this.tagElem = document.querySelector(".maze-field");
@@ -63,7 +63,7 @@
                     
             }
             
-            if(cell.y / 20 + 1 <= 24) {
+            if(cell.y / 20 + 1 <= 14) {
                 
                 let cellAdjacentBottom = this.mazeField[cell.y / 20 + 1][cell.x / 20];
                 if(cellAdjacentBottom.visited === false) {
@@ -73,7 +73,7 @@
                     
             }
             
-            if(cell.x / 20 + 1 <= 24) {
+            if(cell.x / 20 + 1 <= 14) {
                 
                 let cellAdjacentRight = this.mazeField[cell.y / 20][cell.x / 20 + 1];
                 if(cellAdjacentRight.visited === false) {
@@ -97,7 +97,7 @@
                 randAdjacentSelected = adjacentCellsDirection[randIndex];
                 return randAdjacentSelected;
             }
-            return this.getAdjacentCell(this.historyCellVisited.pop());
+            return this.historyCellVisited.pop();
         }
 
         function Cell(width, height, x, y) {
@@ -144,8 +144,18 @@
             }
         }
 
-        Cell.prototype.removeBorderCurrentCell = function(adjacentCellDirection) {
-            switch(adjacentCellDirection) {
+        Cell.prototype.removeBorderCurrentCell = function(adjacentCell) {
+            /**
+             * Every cell border visualization is made by two borders
+             * example: cell1.right + cell2.left or cell20.bottom + cell30.top
+             * At the moment that the currentcell is going back to cells that has
+             * been visited it returns because otherwise it will remove one 
+             * of the borders that has visited previously 
+             */ 
+            if(adjacentCell.visited)
+                return;
+            
+            switch(adjacentCell.direction) {
                 case "top":
                     this.cellTagElem.style.borderTop = "none";
                     break;
@@ -178,13 +188,13 @@
         setInterval(function() {
             let adjacentCell = maze.getAdjacentCell(currentCell);
             currentCell.removeBackground(); 
-            currentCell.removeBorderCurrentCell(adjacentCell.direction);
+            currentCell.removeBorderCurrentCell(adjacentCell);
 
             adjacentCell.makeCellWhite();
             adjacentCell.removeBorderOfAdjacentCell();
             adjacentCell.visited = true;
             currentCell = adjacentCell;
-        },50);
+        },100);
         
     </script>
 </body>
